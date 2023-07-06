@@ -27,8 +27,17 @@ class ContactController extends Controller
     }
 
     public function list() {
-        $contacts = Contact::get()->all();
+        $contacts = Contact::paginate(8);
 
         return response($contacts);
+    }
+
+    public function destory($contactId) {
+        Contact::where('id', $contactId)->delete();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Contact successfully deleted.'
+        ]);
     }
 }

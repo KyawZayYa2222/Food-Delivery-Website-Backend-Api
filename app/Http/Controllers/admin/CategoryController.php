@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\admin;
 
+use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -12,11 +13,11 @@ class CategoryController extends Controller
 {
     // category list
     public function list() {
-        $categories = Category::get()->all();
+        $categories = Category::paginate(8);
         return response($categories);
     }
 
-    public function listById($id) {
+    public function show($id) {
         $category = Category::where('id', $id)->get();
         return response($category);
     }
@@ -63,9 +64,23 @@ class CategoryController extends Controller
 
         return response()->json([
             'status' => 200,
-            'message' => 'Category was updated sucessfully.',
-            'data' => $oldImg
+            'message' => 'Category was updated sucessfully.'
         ], 200);
+    }
+
+
+    public function destory($id) {
+        // Note :: if you delete the category, the products related with
+        // this categroy will be deleted
+
+        Category::where('id', $id)->delete();
+
+        Product::where('category_id', $id)->delete();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Category and related products successfully deleted.',
+        ]);
     }
 
 

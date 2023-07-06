@@ -4,16 +4,60 @@ namespace App\Http\Controllers\admin;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
-    // category list
+    // product list
     public function list() {
-        $products = Product::get()->all();
+        $products = DB::table('products')
+                        ->join('categories', 'products.category_id', '=', 'categories.id')
+                        ->select('products.*', 'categories.name as category_name')
+                        ->paginate(8);
         return response($products);
+    }
+
+    // product order by descending
+    public function orderByDesc() {
+        $products = Product::orderBy('id', 'desc')->paginate(8);
+
+        return response($products);
+    }
+
+    // Product search
+    public function find(Request $request) {
+        if($request->search) {
+            $products = Product::where('name', 'like', '%' . request('search') . '%')->get();
+        } else {
+            $products = Product::paginate(8);
+        }
+
+        return response($products);
+    }
+
+    // Product list by categroy
+    public function listByCategory($categoryId) {
+        $products = DB::table('products')
+                        ->join('categories', 'products.category_id', '=', 'categories.id')
+                        ->select('products.*', 'categories.name as category_name')
+                        ->where('category_id', $categoryId)
+                        ->paginate(8);
+
+        return response($products);
+    }
+
+    // product by id
+    public function show($id) {
+        $productDetails = DB::table('products')
+                            ->join('categories', 'products.category_id', '=', 'categories.id')
+                            ->select('products.*', 'categories.name as category_name')
+                            ->where('id', $id)
+                            ->get();
+
+        return response($productDetails);
     }
 
 
