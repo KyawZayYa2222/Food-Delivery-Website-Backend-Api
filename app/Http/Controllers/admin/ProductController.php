@@ -54,7 +54,7 @@ class ProductController extends Controller
         $productDetails = DB::table('products')
                             ->join('categories', 'products.category_id', '=', 'categories.id')
                             ->select('products.*', 'categories.name as category_name')
-                            ->where('id', $id)
+                            ->where('products.id', $id)
                             ->get();
 
         return response($productDetails);

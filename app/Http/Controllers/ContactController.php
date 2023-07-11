@@ -26,18 +26,27 @@ class ContactController extends Controller
         ], 201);
     }
 
+
     public function list() {
         $contacts = Contact::paginate(8);
 
         return response($contacts);
     }
 
-    public function destory($contactId) {
-        Contact::where('id', $contactId)->delete();
 
-        return response()->json([
-            'status' => 200,
-            'message' => 'Contact successfully deleted.'
-        ]);
+    public function destory($contactId) {
+        if(Contact::where('id', $contactId)->get()->first() != null) {
+            Contact::where('id', $contactId)->delete();
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Contact successfully deleted.'
+            ]);
+        } else {
+            return response()->json([
+                'status' => 422,
+                'message' => 'Contact not found.'
+            ]);
+        }
     }
 }

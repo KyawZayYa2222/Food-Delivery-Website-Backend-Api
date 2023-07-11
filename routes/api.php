@@ -28,21 +28,21 @@ Route::post('/contact/create', [ContactController::class, 'store']);
 
 
 // Authenticated User routes
-Route::middleware('auth:sanctum')->group(function() {
+Route::middleware('auth:sanctum')->prefix('user')->group(function() {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user/order/list', [OrderController::class, 'orderListOfAUser']);
+    Route::get('/order/list', [OrderController::class, 'orderListOfAUser']);
 
-    Route::prefix('user')->group(function() {
-        Route::get('/details', [UserController::class, 'show']);
-        Route::put('/profile-info/update', [UserController::class, 'infoUpdate']);
-        Route::post('/profile-picture/update', [UserController::class, 'profileImageUpdate']);
-        Route::post('/password/update', [UserController::class, 'passwordUpdate']);
-    });
+    Route::get('/details', [UserController::class, 'show']);
+    Route::put('/profile-info/update', [UserController::class, 'infoUpdate']);
+    Route::post('/profile-picture/update', [UserController::class, 'profileImageUpdate']);
+    Route::post('/password/update', [UserController::class, 'passwordUpdate']);
 
     Route::prefix('cart')->group(function() {
         Route::post('/create', [CartController::class, 'store']);
         Route::get('/list', [CartController::class, 'list']);
-        Route::delete('/remove/{id}', [CartController::class, 'destory']);
+        Route::put('/{id}/increasecount', [CartController::class, 'increaseCount']);
+        Route::put('/{id}/decreasecount', [CartController::class, 'decreaseCount']);
+        Route::delete('/{id}/remove', [CartController::class, 'destory']);
         Route::post('/order/create', [OrderController::class, 'store']);
     });
 });
@@ -54,15 +54,15 @@ Route::middleware(['auth:sanctum', 'admin.auth'])->prefix('admin')->group(functi
 
     Route::prefix('category')->group(function() {
         Route::post('/create', [CategoryController::class, 'store']);
-        Route::get('{id}/', [CategoryController::class, 'show']);
+        Route::get('/{id}', [CategoryController::class, 'show']);
         Route::post('/{id}/update', [CategoryController::class, 'update']);
         Route::delete('/{id}/delete', [CategoryController::class, 'destory']);
     });
 
     Route::prefix('product')->group(function() {
         Route::post('/create', [ProductController::class, 'store']);
-        Route::post('/update/{id}', [ProductController::class, 'update']);
-        Route::delete('/delete/{id}', [ProductController::class, 'destory']);
+        Route::post('/{id}/update', [ProductController::class, 'update']);
+        Route::delete('/{id}/delete', [ProductController::class, 'destory']);
     });
 
     Route::prefix('order')->group(function() {

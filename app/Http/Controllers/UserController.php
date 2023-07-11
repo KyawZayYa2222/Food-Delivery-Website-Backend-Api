@@ -91,7 +91,10 @@ class UserController extends Controller
         $hashedPassword = User::where('id', $userId)->get()->first()->password;
 
         if(!Hash::check($request->current_password, $hashedPassword)) {
-            return response()->json(['message' => 'Password does not match!'], 422);
+            return response()->json([
+                'status' => 422,
+                'message' => 'Password does not match!'
+            ], 422);
         }
 
         $password = Hash::make($request->password);
