@@ -6,7 +6,7 @@
 Learn about api links here, <a href="https://kyaws-organization-1.gitbook.io/food-order-api-docs/">https://kyaws-organization-1.gitbook.io/food-order-api-docs</a>
 
 ## Get Api
-- Get api from website easy, <a href="https://kyaws-organization-1.gitbook.io/food-order-api-docs/">Food Delivery Api Site</a> or
+- Get api from website easily, <a href="https://foodapiproject02.000webhostapp.com/">Food Delivery Api Site</a> or
 -  Install project to local
 
 ## Installation
