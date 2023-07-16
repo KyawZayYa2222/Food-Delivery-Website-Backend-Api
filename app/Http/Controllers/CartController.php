@@ -55,7 +55,7 @@ class CartController extends Controller
         $userId = Auth::user()->id;
 
         $cartItems = Cart::join('products', 'carts.product_id', 'products.id')
-                        ->select('carts.*', 'products.name', 'products.price', 'products.image')
+                        ->select('carts.*', 'products.name', 'products.price', 'products.image', 'products.promotion_id')
                         ->where('user_id', $userId)
                         ->get();
 
@@ -83,13 +83,24 @@ class CartController extends Controller
         ], $resp->status);
     }
 
-
-    public function destory($id) {
+    // remove cart item with id
+    public function delete($id) {
         Cart::where('id', $id)->delete();
 
         return response()->json([
             'status' => 200,
             'message' => 'Cart item sucessfully removed.',
+        ]);
+    }
+
+    // remove all cart items of user
+    public function destory() {
+        $userId = Auth::user()->id;
+        Cart::where('user_id', $userId)->delete();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'All cart items of user successfully removed.',
         ]);
     }
 

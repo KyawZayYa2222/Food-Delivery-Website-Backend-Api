@@ -17,4 +17,13 @@ class Order extends Model
         'total_cost',
         'status',
     ];
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            $model->total_cost = $model->total_cost . 'Ks';
+        });
+    }
 }

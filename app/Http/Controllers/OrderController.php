@@ -5,12 +5,22 @@ namespace App\Http\Controllers;
 use stdClass;
 use App\Models\Cart;
 use App\Models\Order;
+use App\Models\Product;
+use App\Models\Promotion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
+    // public function test() {
+    //     // $data = Promotion::with('giveaway')->get();
+    //     $data = (2000) * (20/100);
+
+    //     return response($data);
+    // }
+
+    // order creating
     public function store(Request $request) {
         $validator = $request->validate([
             'location' => 'required|string|max:225',
@@ -18,20 +28,42 @@ class OrderController extends Controller
 
         $userId = Auth::user()->id;
 
-        $cartItems = DB::table('carts')
-                        ->join('products', 'carts.product_id', 'products.id')
-                        ->select('carts.*', 'products.name', 'products.price')
-                        ->where('user_id', $userId)
-                        ->get();
+        $cartItems = Cart::where('user_id', $userId)->get();
 
         if(count($cartItems) > 0) {
             foreach ($cartItems as $cartItem) {
+                $product = Product::where('id', $cartItem->product_id)
+                            ->get()
+                            ->first();
+                $productPrice = preg_replace('/[^0-9]/', '', $product->price);
+                $promotionId = $product->promotion_id;
+                $promotion = Promotion::where('id', $promotionId)
+                                ->get()
+                                ->first();
+
+                // calculating cost for promotion
+                switch ($promotion->promotion_type) {
+                    case 'discount':
+                        $discount = preg_replace('/[^0-9]/', '', $promotion->discount);
+                        $totalCost = ($productPrice * $cartItem->product_count) * ($discount / 100);
+                        break;
+
+                    case 'cashback':
+                        $cashback = preg_replace('/[^0-9]/', '', $promotion->cashback);
+                        $totalCost = ($productPrice * $cartItem->product_count) - $cashback;
+                        break;
+
+                    default:
+                        $totalCost = $productPrice;
+                        break;
+                }
+
                 Order::create([
                     'user_id' => $cartItem->user_id,
                     'product_id' => $cartItem->product_id,
                     'product_count' => $cartItem->product_count,
                     'location' => $request->location,
-                    'total_cost' => $cartItem->price * $cartItem->product_count,
+                    'total_cost' => $totalCost,
                 ]);
             }
 
@@ -60,6 +92,20 @@ class OrderController extends Controller
                         ->paginate(8);
 
         return response($orderData);
+    }
+
+    // User order cancel
+    public function orderCancel($id) {
+        $userId = Auth::user()->id;
+
+        Order::where('user_id', $userId)
+               ->where('id', $id)
+               ->delete();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Your order item successfully canceled.',
+        ]);
     }
 
     // list of order of a user with unique id

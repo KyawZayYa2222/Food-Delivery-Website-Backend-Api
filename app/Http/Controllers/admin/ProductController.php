@@ -13,16 +13,17 @@ class ProductController extends Controller
 {
     // product list
     public function list() {
-        $products = DB::table('products')
-                        ->join('categories', 'products.category_id', '=', 'categories.id')
-                        ->select('products.*', 'categories.name as category_name')
-                        ->paginate(8);
+        $products = $this->GetProduct();
+
         return response($products);
     }
 
     // product order by descending
     public function orderByDesc() {
-        $products = Product::orderBy('id', 'desc')->paginate(8);
+        $products = Product::with(['category' => fn($query) => $this->GetCategory($query),
+                            'promotion' => fn($query) => $this->GetPromotion($query)])
+                            ->orderBy('id', 'desc')
+                            ->paginate(8);
 
         return response($products);
     }
@@ -30,9 +31,12 @@ class ProductController extends Controller
     // Product search
     public function find(Request $request) {
         if($request->search) {
-            $products = Product::where('name', 'like', '%' . request('search') . '%')->get();
+            $products = Product::where('name', 'like', '%' . request('search') . '%')
+                                ->with(['category' => fn($query) => $this->GetCategory($query),
+                                'promotion' => fn($query) => $this->GetPromotion($query)])
+                                ->get();
         } else {
-            $products = Product::paginate(8);
+            $products = $this->GetProduct();
         }
 
         return response($products);
@@ -40,22 +44,20 @@ class ProductController extends Controller
 
     // Product list by categroy
     public function listByCategory($categoryId) {
-        $products = DB::table('products')
-                        ->join('categories', 'products.category_id', '=', 'categories.id')
-                        ->select('products.*', 'categories.name as category_name')
-                        ->where('category_id', $categoryId)
-                        ->paginate(8);
+        $products = Product::with(['category' => fn($query) => $this->GetCategory($query),
+                            'promotion' => fn($query) => $this->GetPromotion($query)])
+                            ->where('category_id', $categoryId)
+                            ->paginate(8);
 
         return response($products);
     }
 
     // product by id
     public function show($id) {
-        $productDetails = DB::table('products')
-                            ->join('categories', 'products.category_id', '=', 'categories.id')
-                            ->select('products.*', 'categories.name as category_name')
-                            ->where('products.id', $id)
-                            ->get();
+        $productDetails = Product::with(['category' => fn($query) => $this->GetCategory($query),
+                            'promotion' => fn($query) => $this->GetPromotion($query)])
+                            ->where('id', $id)
+                            ->get()->first();
 
         return response($productDetails);
     }
@@ -111,6 +113,30 @@ class ProductController extends Controller
     }
 
 
+    // Product data
+    private function GetProduct() {
+        $products = Product::with(['category' => fn($query) => $this->GetCategory($query),
+                            'promotion' => fn($query) => $this->GetPromotion($query)])
+                            ->paginate(8);
+
+        return $products;
+    }
+
+    // Related category
+    private function GetCategory($query) {
+        $data = $query->select('id', 'name', 'image');
+
+        return $data;
+    }
+
+    // Related promotion
+    private function GetPromotion($query) {
+        $data = $query->where('active', 1)
+                ->select('id', 'promotion_type', 'cashback', 'giveaway_id', 'discount', 'start_date', 'end_date');
+
+        return $data;
+    }
+
     // validation
     private function MakeValidation($request) {
         $validator = Validator::make($request->all(), [
@@ -144,6 +170,7 @@ class ProductController extends Controller
             'long_desc' => $request->long_desc,
             'image' => $imageUrl,
             'category_id' => $request->category_id,
+            'promotion_id' => $request->promotion_id,
         ];
     }
 
