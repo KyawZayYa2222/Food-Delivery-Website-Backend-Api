@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/register', [AuthController::class, 'store']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/category/list', [CategoryController::class, 'list']);
+Route::get('/category/paginatedlist', [CategoryController::class, 'paginatedList']);
 Route::get('/product/list', [ProductController::class, 'list']);
 Route::get('/product/search', [ProductController::class, 'find']);
 Route::get('/product/orderbydesc/list', [ProductController::class, 'orderByDesc']);
@@ -68,6 +69,7 @@ Route::middleware(['auth:sanctum', 'admin.auth'])->prefix('admin')->group(functi
 
     Route::prefix('giveaway')->group(function() {
         Route::get('/list', [GiveawayController::class, 'list']);
+        Route::get('/paginatedlist', [GiveawayController::class, 'paginatedList']);
         Route::post('/create', [GiveawayController::class, 'store']);
         Route::post('/{id}/update', [GiveawayController::class, 'update']);
         Route::delete('/{id}/delete', [GiveawayController::class, 'destory']);

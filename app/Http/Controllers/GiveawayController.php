@@ -15,14 +15,23 @@ class GiveawayController extends Controller
     }
 
     public function list() {
-        $giveaways = Giveaway::all();
+        $giveaways = Giveaway::get();
+
+        return response($giveaways);
+    }
+
+    public function paginatedList() {
+        $giveaways = Giveaway::paginate(8);
 
         return response($giveaways);
     }
 
 
     public function store(Request $request) {
-        $fields = $this->MakeValidation($request);
+        $fields = $request->validate([
+            'name' => 'required|string|max:225',
+            'image' => 'required|image|mimes:png,jpg,jpeg,svg|max:2084',
+        ]);
 
         if($request->hasFile('image')) {
             $imageUrl = $this->StoreImage($request);
@@ -41,17 +50,30 @@ class GiveawayController extends Controller
 
 
     public function update($id, Request $request) {
-        $fields = $this->MakeValidation($request);
-
-        if($request->hasFile('image')) {
-            $this->DeleteImage($id);
-            $imageUrl = $this->StoreImage($request);
-        }
-
-        Giveaway::where('id', $id)->update([
-            'name' => $fields['name'],
-            'image' => $imageUrl,
+        $nameValidate = $request->validate([
+            'name' => 'required|string|max:225',
         ]);
+
+
+        if($request->image != 'null') {
+            $imageValidate = $request->validate([
+                'image' => 'image|mimes:png,jpg,jpeg,svg|max:2084',
+            ]);
+
+            if($request->hasFile('image')) {
+                $this->DeleteImage($id);
+                $imageUrl = $this->StoreImage($request);
+            }
+
+            Giveaway::where('id', $id)->update([
+                'name' => $nameValidate['name'],
+                'image' => $imageUrl,
+            ]);
+        } else {
+            Giveaway::where('id', $id)->update([
+                'name' => $nameValidate['name'],
+            ]);
+        }
 
         return response()->json([
             'status' => 200,

@@ -12,7 +12,7 @@ class PromotionController extends Controller
 {
     // List
     public function list() {
-        $promotions = Promotion::with('giveaway')->get();
+        $promotions = Promotion::with('giveaway')->paginate(8);
 
         return response($promotions);
     }
@@ -32,7 +32,9 @@ class PromotionController extends Controller
             ], 422);
         }
 
-        $promotion = Promotion::create($fields);
+        $insertData = $this->DataToInsert($request);
+
+        $promotion = Promotion::create($insertData);
 
         // promotion active if start today
         $this->ActivePromotion($promotion->id, $request);
@@ -59,10 +61,12 @@ class PromotionController extends Controller
             ], 422);
         }
 
-        $promotion = Promotion::where('id', $id)->update($fields);
+        $insertData = $this->DataToInsert($request);
+
+        $promotion = Promotion::where('id', $id)->update($insertData);
 
         // promotion active if start today
-        $this->ActivePromotion($promotion->id, $request);
+        $this->ActivePromotion($id, $request);
 
         return response()->json([
             'status' => 200,
@@ -90,9 +94,6 @@ class PromotionController extends Controller
     private function MakeValidation($request) {
         $fields = $request->validate([
             'promotion_type' => 'required|string|max:10',
-            'cashback' => 'string|max:10',
-            'giveaway_id' => 'integer|max:10',
-            'discount' => 'string|max:10',
             'start_date' => 'required|date|max:10',
             'end_date' => 'required|date|max:10',
         ]);
@@ -100,22 +101,48 @@ class PromotionController extends Controller
         return $fields;
     }
 
+    // data to insert
+    private function DataToInsert($request) {
+        $data = [
+            'promotion_type' => $request->promotion_type,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+        ];
+
+        switch ($request->promotion_type) {
+            case 'cashback':
+                $data['cashback'] = $request->cashback;
+                break;
+            case 'giveaway':
+                $data['giveaway_id'] = $request->giveaway_id;
+                break;
+            case 'discount':
+                $data['discount'] = $request->discount;
+                break;
+            default:
+                # code...
+                break;
+        }
+
+        return $data;
+    }
+
     // validate promotion parameter
     private function ValidatePromotion($request) {
         switch ($request->promotion_type) {
             case 'cashback':
                 $request->validate([
-                    'cashback' => 'required'
+                    'cashback' => 'required|integer|max:10000'
                 ]);
                 break;
             case 'giveaway':
                 $request->validate([
-                    'giveaway_id' => 'required'
+                    'giveaway_id' => 'required|integer|max:100'
                 ]);
                 break;
             case 'discount':
                 $request->validate([
-                    'discount' => 'required'
+                    'discount' => 'required|integer|max:100'
                 ]);
                 break;
             default:

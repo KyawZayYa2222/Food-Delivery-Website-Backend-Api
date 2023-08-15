@@ -31,8 +31,8 @@ class Promotion extends Model
         parent::boot();
 
         static::saving(function ($model) {
-            $model->discount = $model->discount . '%';
-            $model->cashback = $model->cashback . 'Ks';
+            $model->discount = $model->discount ? $model->discount . '%' : $model->discount;
+            $model->cashback = $model->cashback ? $model->cashback . 'Ks' : $model->cashback;
         });
     }
 }

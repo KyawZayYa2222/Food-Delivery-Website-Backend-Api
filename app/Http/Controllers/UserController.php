@@ -49,8 +49,9 @@ class UserController extends Controller
 
     // User profile update
     public function profileImageUpdate(Request $request) {
+        return response($request->image);
         $field = $request->validate([
-            'image' => 'required|image|mimes:png,jpg,jpeg,svg|max:2084'
+            'image' => 'required|image|mimes:png,jpg,jpeg,svg|max:2048'
         ]);
 
         $userId = $this->UserId();

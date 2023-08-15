@@ -29,12 +29,12 @@ class SlideshowCommand extends Command
     {
         $today = Carbon::now()->format('Y-m-d');
 
-        // promotion active
-        Slideshow::where('start_date', $today)->update([
+        // slideshow active
+        Slideshow::where('show_date', $today)->update([
             'active' => 1,
         ]);
 
-        // promotion unactive
+        // slideshow unactive
         Slideshow::where('end_date', $today)->update([
             'active' => 0,
         ]);

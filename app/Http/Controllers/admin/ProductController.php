@@ -66,6 +66,7 @@ class ProductController extends Controller
     // product creating
     public function store(Request $request) {
         $validator = $this->MakeValidation($request);
+        return response($request);
 
         if($request->hasFile('image')) {
             $imageUrl = $this->StoreImage($request);

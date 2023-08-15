@@ -13,6 +13,11 @@ class CategoryController extends Controller
 {
     // category list
     public function list() {
+        $categories = Category::get();
+        return response($categories);
+    }
+
+    public function paginatedList() {
         $categories = Category::paginate(8);
         return response($categories);
     }
@@ -24,7 +29,10 @@ class CategoryController extends Controller
 
     // category creating
     public function store(Request $request) {
-        $validator = $this->MakeValidation($request);
+        $validator = $request->validate([
+            'name' => 'required|string|max:255',
+            'image' => 'required|image|mimes:png,jpg,jpeg|max:2084'
+        ]);
 
         // store image and path
         if($request->hasFile('image')) {
@@ -45,22 +53,34 @@ class CategoryController extends Controller
 
     // category updating
     public function update($id, Request $request) {
-        $validator = $this->MakeValidation($request);
-
-        if($request->hasFile('image')) {
-            // deleting old image file
-            $oldImgUrl = Category::where('id', $id)->get()->first()->image;
-            $segments = explode('/', $oldImgUrl);
-            $oldImg = end($segments);
-            Storage::delete('public/category_image/'.$oldImg);
-
-            $imageUrl = $this->StoreImage($request);
-        }
-
-        Category::where('id', $id)->update([
-            'name' => $request->name,
-            'image' => $imageUrl,
+        $nameValidate = $request->validate([
+            'name' => 'required|string|max:225'
         ]);
+
+        if($request->image != 'null') {
+            $imageValidate = $request->validate([
+                'image' => 'image|mimes:png,jpg,svg|max:2084'
+            ]);
+
+            if($request->hasFile('image')) {
+                // deleting old image file
+                $oldImgUrl = Category::where('id', $id)->get()->first()->image;
+                $segments = explode('/', $oldImgUrl);
+                $oldImg = end($segments);
+                Storage::delete('public/category_image/'.$oldImg);
+
+                $imageUrl = $this->StoreImage($request);
+            }
+
+            Category::where('id', $id)->update([
+                'name' => $request->name,
+                'image' => $imageUrl,
+            ]);
+        } else {
+            Category::where('id', $id)->update([
+                'name' => $request->name
+            ]);
+        }
 
         return response()->json([
             'status' => 200,
@@ -84,15 +104,6 @@ class CategoryController extends Controller
     }
 
 
-    // validation
-    private function MakeValidation($request) {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'image' => 'required|image|mimes:png,jpg,jpeg|max:2084'
-        ])->validate();
-
-        return $validator;
-    }
 
     // store image file
     private function StoreImage($request) {
