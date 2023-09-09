@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use stdClass;
 use App\Models\Cart;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Promotion;
 use Illuminate\Http\Request;
@@ -13,23 +14,22 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    // public function test() {
-    //     // $data = Promotion::with('giveaway')->get();
-    //     $data = (2000) * (20/100);
-
-    //     return response($data);
-    // }
-
     // order creating
     public function store(Request $request) {
         $validator = $request->validate([
-            'location' => 'required|string|max:225',
+            'location' => 'required|string|max:100',
+            'payment_type' => 'required|string|max:10',
         ]);
-
         $userId = Auth::user()->id;
 
-        $cartItems = Cart::where('user_id', $userId)->get();
+        // check user info
+        if(!Auth::user()->address || !Auth::user()->phone) {
+            return response()->json([
+                'message' => 'Please fills your profile details first.'
+            ], 400);
+        }
 
+        $cartItems = Cart::where('user_id', $userId)->get();
         if(count($cartItems) > 0) {
             foreach ($cartItems as $cartItem) {
                 $product = Product::where('id', $cartItem->product_id)
@@ -58,12 +58,18 @@ class OrderController extends Controller
                         break;
                 }
 
+                $payment = Payment::create([
+                    'payment_type' => $request->payment_type,
+                    'verified' => 1,
+                ]);
+
                 Order::create([
                     'user_id' => $cartItem->user_id,
                     'product_id' => $cartItem->product_id,
                     'product_count' => $cartItem->product_count,
                     'location' => $request->location,
                     'total_cost' => $totalCost,
+                    'payment_id' => $payment->id,
                 ]);
             }
 
@@ -84,11 +90,19 @@ class OrderController extends Controller
 
     // list of all order
     public function list() {
-        $orderData = Order::join('users', 'orders.user_id', 'users.id')
-                        ->join('products', 'orders.product_id', 'products.id')
-                        ->select('orders.*', 'users.name as user_name', 'users.email', 'users.phone',
-                        'users.address', 'users.image as user_image', 'products.name as product_name',
-                        'products.price', 'products.image as product_image')
+        // $orderData = Order::join('users', 'orders.user_id', 'users.id')
+        //                 ->join('products', 'orders.product_id', 'products.id')
+        //                 ->select('orders.*', 'users.name as user_name', 'users.email', 'users.phone',
+        //                 'users.address', 'users.image as user_image', 'products.name as product_name',
+        //                 'products.price', 'products.image as product_image')
+        //                 ->paginate(8);
+        $orderData = Order::leftJoin('users', 'orders.user_id', 'users.id')
+                        ->leftJoin('products', 'orders.product_id', 'products.id')
+                        ->leftJoin('payments', 'orders.payment_id', 'payments.id')
+                        ->leftJoin('promotions', 'products.promotion_id', 'promotions.id')
+                        ->leftJoin('giveaways', 'promotions.giveaway_id', 'giveaways.id')
+                        ->select('orders.*', 'users.name as user_name', 'products.name as product_name', 'payments.verified',
+                        'promotions.promotion_type', 'promotions.discount', 'promotions.cashback', 'promotions.giveaway_id', 'giveaways.name')
                         ->paginate(8);
 
         return response($orderData);
@@ -112,15 +126,14 @@ class OrderController extends Controller
     public function orderListOfAUser() {
         $userId = Auth::user()->id;
 
-        $orderData = Order::join('users', 'orders.user_id', 'users.id')
-                        ->join('products', 'orders.product_id', 'products.id')
-                        ->select('orders.*', 'users.name as user_name', 'users.email', 'users.phone',
-                        'users.address', 'users.image as user_image', 'products.name as product_name',
-                        'products.price', 'products.image as product_image')
-                        ->where('orders.user_id', $userId)
-                        ->get();
+        $orders = Order::leftJoin('products', 'orders.product_id', 'products.id')
+                    ->leftJoin('promotions', 'products.promotion_id', 'promotions.id')
+                    ->leftJoin('giveaways', 'promotions.giveaway_id', 'giveaways.id')
+                    ->select('orders.*', 'products.name', 'products.image', 'promotions.discount',
+                    'promotions.promotion_type', 'promotions.cashback', 'giveaways.name as giveaway')
+                    ->get();
 
-        return response($orderData);
+        return response($orders);
     }
 
     // Order accept

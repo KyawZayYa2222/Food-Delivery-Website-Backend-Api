@@ -10,9 +10,16 @@ use Illuminate\Support\Carbon;
 
 class PromotionController extends Controller
 {
-    // List
-    public function list() {
+    // All list
+    public function allList() {
         $promotions = Promotion::with('giveaway')->paginate(8);
+
+        return response($promotions);
+    }
+
+    // Active list
+    public function activeList() {
+        $promotions = Promotion::with('giveaway')->where('active', 1)->get();
 
         return response($promotions);
     }
@@ -111,13 +118,13 @@ class PromotionController extends Controller
 
         switch ($request->promotion_type) {
             case 'cashback':
-                $data['cashback'] = $request->cashback;
+                $data['cashback'] = $request->cashback . 'Ks';
                 break;
             case 'giveaway':
                 $data['giveaway_id'] = $request->giveaway_id;
                 break;
             case 'discount':
-                $data['discount'] = $request->discount;
+                $data['discount'] = $request->discount . '%';
                 break;
             default:
                 # code...

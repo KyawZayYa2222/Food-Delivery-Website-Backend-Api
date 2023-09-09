@@ -62,6 +62,38 @@ class CartController extends Controller
         return response($cartItems);
     }
 
+    public function totalCost() {
+        $userId = Auth::user()->id;
+        $cartItems = Cart::leftJoin('products', 'carts.product_id', 'products.id')
+                        ->leftJoin('promotions', 'products.promotion_id', 'promotions.id')
+                        ->select('carts.product_count', 'products.price', 'promotions.promotion_type', 'promotions.discount', 'promotions.cashback')
+                        ->where('user_id', $userId)
+                        ->get();
+
+        $totalCost = 0;
+        foreach ($cartItems as $key => $item) {
+            $productPrice = preg_replace('/[^0-9]/', '', $item->price);
+            switch ($item->promotion_type) {
+                case 'discount':
+                    $discount = preg_replace('/[^0-9]/', '', $item->discount);
+                    $costOfAItem = ($productPrice * ($discount / 100) * $item->product_count);
+                    break;
+
+                case 'cashback':
+                    $cashback = preg_replace('/[^0-9]/', '', $item->cashback);
+                    $costOfAItem = ($productPrice - $cashback) * $item->product_count;
+                    break;
+
+                default:
+                    $costOfAItem = $productPrice;
+                    break;
+            }
+            $totalCost += $costOfAItem;
+        }
+
+        return response($totalCost.'Ks');
+    }
+
     // Item increase
     public function increaseCount($id) {
         $resp = $this->ChangeCount($id, 'increase');

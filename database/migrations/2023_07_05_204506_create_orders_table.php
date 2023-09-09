@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('product_count');
             $table->string('location');
             $table->string('total_cost');
+            $table->integer('payment_id');
             $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
             $table->timestamps();
         });

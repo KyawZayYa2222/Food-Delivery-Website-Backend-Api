@@ -32,12 +32,4 @@ class Product extends Model
         'promotion_id',
     ];
 
-    public static function boot()
-    {
-        parent::boot();
-
-        static::saving(function ($model) {
-            $model->price = $model->price . 'Ks';
-        });
-    }
 }

@@ -47,12 +47,14 @@ Route::middleware('auth:sanctum')->prefix('user')->group(function() {
     Route::prefix('cart')->group(function() {
         Route::post('/create', [CartController::class, 'store']);
         Route::get('/list', [CartController::class, 'list']);
-        Route::put('/{id}/increasecount', [CartController::class, 'increaseCount']);
-        Route::put('/{id}/decreasecount', [CartController::class, 'decreaseCount']);
+        Route::get('/total-cost', [CartController::class, 'totalCost'])->name('cart-totalcost');
+        Route::post('/{id}/increasecount', [CartController::class, 'increaseCount']);
+        Route::post('/{id}/decreasecount', [CartController::class, 'decreaseCount']);
         Route::delete('/all/remove', [CartController::class, 'destory']);
         Route::delete('/{id}/remove', [CartController::class, 'delete']);
-        Route::post('/order/create', [OrderController::class, 'store']);
     });
+
+    Route::post('/order/create', [OrderController::class, 'store']);
 });
 
 
@@ -76,7 +78,8 @@ Route::middleware(['auth:sanctum', 'admin.auth'])->prefix('admin')->group(functi
     });
 
     Route::prefix('promotion')->group(function() {
-        Route::get('/list', [PromotionController::class, 'list']);
+        Route::get('/list/all', [PromotionController::class, 'allList']);
+        Route::get('/list/active', [PromotionController::class, 'activeList']);
         Route::post('/create', [PromotionController::class, 'store']);
         Route::put('/{id}/update', [PromotionController::class, 'update']);
         Route::delete('/{id}/delete', [PromotionController::class, 'destory']);

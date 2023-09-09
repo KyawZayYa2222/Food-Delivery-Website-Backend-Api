@@ -15,6 +15,7 @@ class Order extends Model
         'product_count',
         'location',
         'total_cost',
+        'payment_id',
         'status',
     ];
 

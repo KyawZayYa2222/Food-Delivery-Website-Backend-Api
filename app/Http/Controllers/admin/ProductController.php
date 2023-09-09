@@ -11,46 +11,27 @@ use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
-    // product list
     public function list() {
-        $products = $this->GetProduct();
+        $products = Product::with([
+                        'category' => fn($q) => $this->GetCategory($q),
+                        'promotion' => fn($q) => $this->GetPromotion($q)
+                        ])
+                        ->when(request('search'), function($q) {
+                            $q->where('name', 'like', '%' . request('search') . '%');
+                        })
+                        ->when(request('category_id'), function($q) {
+                            $q->where('category_id', request('category_id'));
+                        })
+                        ->when(request('order_by'), function($q) {
+                            if(request('order_by')==='desc') {
+                                $q->orderBy('id', 'desc');
+                            }
+                        })
+                        ->paginate(8);
 
         return response($products);
     }
 
-    // product order by descending
-    public function orderByDesc() {
-        $products = Product::with(['category' => fn($query) => $this->GetCategory($query),
-                            'promotion' => fn($query) => $this->GetPromotion($query)])
-                            ->orderBy('id', 'desc')
-                            ->paginate(8);
-
-        return response($products);
-    }
-
-    // Product search
-    public function find(Request $request) {
-        if($request->search) {
-            $products = Product::where('name', 'like', '%' . request('search') . '%')
-                                ->with(['category' => fn($query) => $this->GetCategory($query),
-                                'promotion' => fn($query) => $this->GetPromotion($query)])
-                                ->get();
-        } else {
-            $products = $this->GetProduct();
-        }
-
-        return response($products);
-    }
-
-    // Product list by categroy
-    public function listByCategory($categoryId) {
-        $products = Product::with(['category' => fn($query) => $this->GetCategory($query),
-                            'promotion' => fn($query) => $this->GetPromotion($query)])
-                            ->where('category_id', $categoryId)
-                            ->paginate(8);
-
-        return response($products);
-    }
 
     // product by id
     public function show($id) {
@@ -66,7 +47,6 @@ class ProductController extends Controller
     // product creating
     public function store(Request $request) {
         $validator = $this->MakeValidation($request);
-        return response($request);
 
         if($request->hasFile('image')) {
             $imageUrl = $this->StoreImage($request);
@@ -166,7 +146,7 @@ class ProductController extends Controller
     private function QueryData($request, $imageUrl) {
         return [
             'name' => $request->name,
-            'price' => $request->price,
+            'price' => $request->price . 'Ks',
             'short_desc' => $request->short_desc,
             'long_desc' => $request->long_desc,
             'image' => $imageUrl,

@@ -33,7 +33,7 @@ class UserController extends Controller
 
         $fields = $request->validate([
             'name' => 'required|string|max:225',
-            'email' => 'required|email|unique:users,email,except,'.$userId,
+            'email' => 'required|email|unique:users,email,'.$userId,
             'phone' => 'required|string|max:14',
             'address' => 'required|string|max:255',
         ]);
@@ -49,7 +49,7 @@ class UserController extends Controller
 
     // User profile update
     public function profileImageUpdate(Request $request) {
-        return response($request->image);
+        // return response($request->image);
         $field = $request->validate([
             'image' => 'required|image|mimes:png,jpg,jpeg,svg|max:2048'
         ]);
@@ -94,7 +94,7 @@ class UserController extends Controller
         if(!Hash::check($request->current_password, $hashedPassword)) {
             return response()->json([
                 'status' => 422,
-                'message' => 'Password does not match!'
+                'errors' => ['current_password' => ['Password does not match!']]
             ], 422);
         }
 

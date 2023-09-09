@@ -25,14 +25,4 @@ class Promotion extends Model
         'start_date',
         'end_date',
     ];
-
-    public static function boot()
-    {
-        parent::boot();
-
-        static::saving(function ($model) {
-            $model->discount = $model->discount ? $model->discount . '%' : $model->discount;
-            $model->cashback = $model->cashback ? $model->cashback . 'Ks' : $model->cashback;
-        });
-    }
 }
