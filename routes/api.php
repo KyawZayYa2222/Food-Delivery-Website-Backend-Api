@@ -14,13 +14,14 @@ use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\admin\ProductController;
 use App\Http\Controllers\admin\CategoryController;
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
 
 // Public routes
-Route::post('/register', [AuthController::class, 'store']);
+Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/google-login', [AuthController::class, 'loginWithGoogle']);
 Route::get('/category/list', [CategoryController::class, 'list']);
 Route::get('/category/paginatedlist', [CategoryController::class, 'paginatedList']);
 Route::get('/product/list', [ProductController::class, 'list']);

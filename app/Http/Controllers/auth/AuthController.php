@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\auth;
 
 use App\Models\User;
+use App\Models\Glogin;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
     // Register
-    public function store(Request $request) {
+    public function register(Request $request) {
         $fields = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
@@ -45,9 +46,7 @@ class AuthController extends Controller
 
         if(Auth::attempt($validators)) {
             $user = auth()->user();
-
             $token = $user->createToken('api-access-token')->plainTextToken;
-
             return response()->json([
                 'status' => 200,
                 'message' => 'successfully logined',
@@ -59,6 +58,38 @@ class AuthController extends Controller
                 'status' => 401,
                 'message' => 'Invalid user email or password',
             ], 401);
+        }
+    }
+
+    // login with google
+    public function loginWithGoogle(Request $request) {
+        $glogin = Glogin::where('uid', $request->uid)->first();
+
+        if($glogin=="") {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'image' => $request->image,
+            ]);
+
+            Glogin::create([
+                'uid' => $request->uid,
+                'user_id' => $user->id
+            ]);
+        }
+
+        $user = User::where('id', $glogin->user_id)->first();
+        if($user)
+        {
+            Auth::login($user);
+            $user = auth()->user();
+            $token = $user->createToken('api-access-token')->plainTextToken;
+            return response()->json([
+                'status' => 200,
+                'message' => 'successfully logined',
+                'userData' => $user,
+                'token' => $token,
+            ]);
         }
     }
 
