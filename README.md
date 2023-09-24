@@ -1,7 +1,8 @@
-# Food-Delivery-Website-Backend-Api
-### Backend api of food delivery website using laravel 10
-<img src="https://github.com/KyawZayYa2222/Food-Delivery-Website-Backend-Api/assets/130377420/427f96ac-12ad-41a1-bafa-255744f7ce60"/>
+# Food Delivery Website Backend Api
+<img src="https://github.com/KyawZayYa2222/Food-Delivery-Website-Backend-Api/assets/130377420/9370457c-7cda-4f67-a1b9-1ce9d97dca17"/>
 
+## Description
+Food delivery website backend api for vue-js frontend, get the frontend project from this repo, <a href="https://github.com/KyawZayYa2222/Food-Delivery-Website-Frontend-with-vuejs">Food Delivery Website Vue-js Frontend</a>
 ## Api-Documentation
 Learn about api links here, <a href="https://kyaws-organization-1.gitbook.io/food-order-api-docs/">https://kyaws-organization-1.gitbook.io/food-order-api-docs</a>
 
@@ -17,5 +18,5 @@ Learn about api links here, <a href="https://kyaws-organization-1.gitbook.io/foo
 - setup .env file
 - php artisan key:generate
 - php artisan storage:link
-- php artisan migrate:fresh --seed
+- php artisan migrate
 - php artisan serve
