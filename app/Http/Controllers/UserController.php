@@ -112,6 +112,17 @@ class UserController extends Controller
         ]);
     }
 
+    public function destroy($id) {
+        $user = User::find($id);
+        if($user) {
+            $user->delete();
+        }
+        return response()->json([
+            'status' => 200,
+            'message' => 'User deleted successfully.',
+        ]);
+    }
+
     // User id
     private function UserId() {
         return Auth::user()->id;

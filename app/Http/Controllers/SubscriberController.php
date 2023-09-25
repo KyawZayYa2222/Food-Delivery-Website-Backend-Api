@@ -22,7 +22,7 @@ class SubscriberController extends Controller
 
         return response()->json([
             'status' => 201,
-            'message' => 'You subscribed.'
+            'message' => 'Great! Now you are a subscriber.'
         ], 201);
     }
 

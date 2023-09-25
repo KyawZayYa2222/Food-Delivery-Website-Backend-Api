@@ -69,7 +69,7 @@ class SlideshowController extends Controller
         $slideshow = Slideshow::where('id', $id)
                         ->update($this->InsertQuery($fields, $imageUrl));
 
-        $this->ActiveSlideshow($slideshow->id, $request);
+        $this->ActiveSlideshow($id, $request);
 
         return response()->json([
             'status' => 200,
@@ -78,8 +78,11 @@ class SlideshowController extends Controller
     }
 
     // delete
-    public function destory($id) {
-        Slideshow::where('id', $id)->delete();
+    public function destroy($id) {
+        $slideshow = Slideshow::find($id);
+        if($slideshow) {
+            $slideshow->delete();
+        }
 
         return response()->json([
             'status' => 200,
@@ -95,7 +98,7 @@ class SlideshowController extends Controller
             'title' => 'required|string|max:225',
             'sub_title' => 'required|string|max:225',
             'description' => 'required|string',
-            'image' => 'required|image|mimes:png,jpg,jpeg,svg',
+            'image' => 'required|image|mimes:png,jpg,jpeg,svg|max: 3048',
             'show_date' => 'required|date|max:10',
             'end_date' => 'required|date|max:10',
         ]);
@@ -136,7 +139,7 @@ class SlideshowController extends Controller
 
     // Active promotion
     private function ActiveSlideshow($id, $request) {
-        if($request->start_date == Carbon::now()->format('Y-m-d')) {
+        if($request->show_date == Carbon::now()->format('Y-m-d')) {
             Slideshow::where('id', $id)->update([
                 'active' => 1,
             ]);

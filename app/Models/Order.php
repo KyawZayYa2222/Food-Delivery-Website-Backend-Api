@@ -19,12 +19,12 @@ class Order extends Model
         'status',
     ];
 
-    public static function boot()
-    {
-        parent::boot();
+    // public static function boot()
+    // {
+    //     parent::boot();
 
-        static::saving(function ($model) {
-            $model->total_cost = $model->total_cost . 'Ks';
-        });
-    }
+    //     static::saving(function ($model) {
+    //         $model->total_cost = $model->total_cost . 'Ks';
+    //     });
+    // }
 }

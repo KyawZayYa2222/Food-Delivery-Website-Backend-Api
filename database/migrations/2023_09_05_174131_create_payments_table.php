@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->enum('payment_type', ['paypal', 'visa', 'master', 'stripe']);
-            $table->boolean('verified');
+            $table->enum('status', ['pending', 'verified', 'rejected'])->default('pending');
             $table->timestamps();
         });
     }

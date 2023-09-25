@@ -6,114 +6,150 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\GiveawayController;
 use App\Http\Controllers\auth\AuthController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\SlideshowController;
 use App\Http\Controllers\SubscriberController;
+use App\Http\Controllers\admin\PaymentController;
 use App\Http\Controllers\admin\ProductController;
 use App\Http\Controllers\admin\CategoryController;
+use App\Http\Controllers\admin\DashboardController;
 
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
 
 // Public routes
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/google-login', [AuthController::class, 'loginWithGoogle']);
-Route::get('/category/list', [CategoryController::class, 'list']);
-Route::get('/category/paginatedlist', [CategoryController::class, 'paginatedList']);
-Route::get('/product/list', [ProductController::class, 'list']);
-Route::get('/product/search', [ProductController::class, 'find']);
-Route::get('/product/orderbydesc/list', [ProductController::class, 'orderByDesc']);
-Route::get('/product/bycategory/{categoryId}/list', [ProductController::class, 'listByCategory']);
-Route::get('/product/{id}/details', [ProductController::class, 'show']);
+Route::controller(AuthController::class)->group(function() {
+    Route::post('/register', 'register');
+    Route::post('/login', 'login');
+    Route::post('/google-login', 'loginWithGoogle');
+});
+Route::prefix('category')->controller(CategoryController::class)->group(function() {
+    Route::get('/list', 'list');
+    Route::get('/paginatedlist', 'paginatedList');
+});
+Route::prefix('product')->controller(ProductController::class)->group(function() {
+    Route::get('/list', 'list');
+    Route::get('/search', 'find');
+    Route::get('/orderbydesc/list', 'orderByDesc');
+    Route::get('/bycategory/{categoryId}/list', 'listByCategory');
+    Route::get('/{id}/details', 'show');
+});
+
 Route::post('/contact/create', [ContactController::class, 'store']);
 Route::post('/subscriber/create', [SubscriberController::class, 'store']);
 Route::get('/giveaway/{id}/show', [GiveawayController::class, 'show']);
+Route::get('/feedback/public-list', [FeedbackController::class, 'publicList']);
+Route::get('/slideshow/active-list', [SlideshowController::class, 'activeList']);
 
 
 // Authenticated User routes
 Route::middleware('auth:sanctum')->prefix('user')->group(function() {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/order/list', [OrderController::class, 'orderListOfAUser']);
-    Route::delete('/order/{id}/cancel', [OrderController::class, 'orderCancel']);
-
-    Route::get('/details', [UserController::class, 'show']);
-    Route::put('/profile-info/update', [UserController::class, 'infoUpdate']);
-    Route::post('/profile-picture/update', [UserController::class, 'profileImageUpdate']);
-    Route::post('/password/update', [UserController::class, 'passwordUpdate']);
-
-    Route::prefix('cart')->group(function() {
-        Route::post('/create', [CartController::class, 'store']);
-        Route::get('/list', [CartController::class, 'list']);
-        Route::get('/total-cost', [CartController::class, 'totalCost'])->name('cart-totalcost');
-        Route::post('/{id}/increasecount', [CartController::class, 'increaseCount']);
-        Route::post('/{id}/decreasecount', [CartController::class, 'decreaseCount']);
-        Route::delete('/all/remove', [CartController::class, 'destory']);
-        Route::delete('/{id}/remove', [CartController::class, 'delete']);
+    Route::prefix('order')->controller(OrderController::class)->group(function() {
+        Route::get('/list', 'orderListOfAUser');
+        Route::delete('/{id}/cancel', 'orderCancel');
     });
 
+    Route::controller(UserController::class)->group(function() {
+        Route::get('/details', 'show');
+        Route::put('/profile-info/update', 'infoUpdate');
+        Route::post('/profile-picture/update', 'profileImageUpdate');
+        Route::post('/password/update', 'passwordUpdate');
+    });
+
+    Route::prefix('cart')->controller(CartController::class)->group(function() {
+        Route::post('/create', 'store');
+        Route::get('/list', 'list');
+        Route::get('/total-cost', 'totalCost')->name('cart-totalcost');
+        Route::post('/{id}/increasecount', 'increaseCount');
+        Route::post('/{id}/decreasecount', 'decreaseCount');
+        Route::delete('/all/remove', 'destory');
+        Route::delete('/{id}/remove', 'delete');
+    });
+
+    Route::post('/feedback/create', [FeedbackController::class, 'store']);
     Route::post('/order/create', [OrderController::class, 'store']);
 });
 
 
 // Authenticated Admin routes
 Route::middleware(['auth:sanctum', 'admin.auth'])->prefix('admin')->group(function() {
-    Route::get('/user/list', [UserController::class, 'list']);
-
-    Route::prefix('category')->group(function() {
-        Route::post('/create', [CategoryController::class, 'store']);
-        Route::get('/{id}', [CategoryController::class, 'show']);
-        Route::post('/{id}/update', [CategoryController::class, 'update']);
-        Route::delete('/{id}/delete', [CategoryController::class, 'destory']);
+    Route::prefix('dashboard')->controller(DashboardController::class)->group(function() {
+        Route::get('/total-income', 'totalIncome');
+        Route::get('/total-order', 'totalOrder');
+        Route::get('/total-product', 'totalProduct');
+        Route::get('/total-register', 'totalRegister');
+        Route::get('/recent-sales', 'recentSales');
     });
 
-    Route::prefix('giveaway')->group(function() {
-        Route::get('/list', [GiveawayController::class, 'list']);
-        Route::get('/paginatedlist', [GiveawayController::class, 'paginatedList']);
-        Route::post('/create', [GiveawayController::class, 'store']);
-        Route::post('/{id}/update', [GiveawayController::class, 'update']);
-        Route::delete('/{id}/delete', [GiveawayController::class, 'destory']);
+    Route::prefix('user')->controller(UserController::class)->group(function() {
+        Route::get('/list', 'list');
+        Route::delete('/{id}/delete', 'destroy');
     });
 
-    Route::prefix('promotion')->group(function() {
-        Route::get('/list/all', [PromotionController::class, 'allList']);
-        Route::get('/list/active', [PromotionController::class, 'activeList']);
-        Route::post('/create', [PromotionController::class, 'store']);
-        Route::put('/{id}/update', [PromotionController::class, 'update']);
-        Route::delete('/{id}/delete', [PromotionController::class, 'destory']);
+    Route::prefix('category')->controller(CategoryController::class)->group(function() {
+        Route::post('/create', 'store');
+        Route::get('/{id}', 'show');
+        Route::post('/{id}/update', 'update');
+        Route::delete('/{id}/delete', 'destory');
     });
 
-    Route::prefix('product')->group(function() {
-        Route::post('/create', [ProductController::class, 'store']);
-        Route::post('/{id}/update', [ProductController::class, 'update']);
-        Route::delete('/{id}/delete', [ProductController::class, 'destory']);
+    Route::prefix('giveaway')->controller(GiveawayController::class)->group(function() {
+        Route::get('/list', 'list');
+        Route::get('/paginatedlist', 'paginatedList');
+        Route::post('/create', 'store');
+        Route::post('/{id}/update', 'update');
+        Route::delete('/{id}/delete', 'destory');
     });
 
-    Route::prefix('order')->group(function() {
-        Route::get('/list', [OrderController::class, 'list']);
-        Route::put('/{orderId}/accept', [OrderController::class, 'accept']);
-        Route::put('/{orderId}/reject', [OrderController::class, 'reject']);
-        Route::delete('/{orderId}/delete', [OrderController::class, 'destory']);
+    Route::prefix('promotion')->controller(PromotionController::class)->group(function() {
+        Route::get('/list/all', 'allList');
+        Route::get('/list/active', 'activeList');
+        Route::post('/create', 'store');
+        Route::put('/{id}/update', 'update');
+        Route::delete('/{id}/delete', 'destory');
     });
 
-    Route::prefix('contact')->group(function() {
-        Route::get('/list', [ContactController::class, 'list']);
-        Route::delete('/{contactId}/delete', [ContactController::class, 'destory']);
+    Route::prefix('product')->controller(ProductController::class)->group(function() {
+        Route::post('/create', 'store');
+        Route::post('/{id}/update', 'update');
+        Route::delete('/{id}/delete', 'destory');
     });
 
-    Route::prefix('slideshow')->group(function() {
-        Route::get('/list/active', [SlideshowController::class, 'activeList']);
-        Route::get('/list', [SlideshowController::class, 'list']);
-        Route::post('/create', [SlideshowController::class, 'store']);
-        Route::post('/{id}/update', [SlideshowController::class, 'update']);
-        Route::post('/{id}/delete', [SlideshowController::class, 'delete']);
+    Route::prefix('payment')->controller(PaymentController::class)->group(function() {
+        Route::get('/list', 'list');
+        Route::get('/{id}/verify', 'verify');
+        Route::get('/{id}/reject', 'reject');
     });
 
-    Route::prefix('subscriber')->group(function() {
-        Route::get('/list', [SubscriberController::class, 'list']);
-        Route::delete('/{id}/delete', [SubscriberController::class, 'destory']);
+    Route::prefix('order')->controller(OrderController::class)->group(function() {
+        Route::get('/list', 'list');
+        Route::put('/{id}/accept', 'accept');
+        Route::put('/{id}/reject', 'reject');
+        Route::delete('/{id}/delete', 'destory');
+    });
+
+    Route::prefix('contact')->controller(ContactController::class)->group(function() {
+        Route::get('/list', 'list');
+        Route::delete('/{contactId}/delete', 'destory');
+    });
+
+    Route::prefix('feedback')->controller(FeedbackController::class)->group(function() {
+        Route::get('/list', 'list');
+        Route::get('/{id}/control-public', 'controlPublic');
+        Route::delete('/{id}/delete', 'destroy');
+    });
+
+    Route::prefix('slideshow')->controller(SlideshowController::class)->group(function() {
+        Route::get('/list', 'list');
+        Route::post('/create', 'store');
+        Route::post('/{id}/update', 'update');
+        Route::delete('/{id}/delete', 'destroy');
+    });
+
+    Route::prefix('subscriber')->controller(SubscriberController::class)->group(function() {
+        Route::get('/list', 'list');
+        Route::delete('/{id}/delete', 'destory');
     });
 });

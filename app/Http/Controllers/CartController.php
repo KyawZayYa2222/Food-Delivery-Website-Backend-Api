@@ -85,7 +85,7 @@ class CartController extends Controller
                     break;
 
                 default:
-                    $costOfAItem = $productPrice;
+                    $costOfAItem = intval($productPrice) * $item->product_count;
                     break;
             }
             $totalCost += $costOfAItem;

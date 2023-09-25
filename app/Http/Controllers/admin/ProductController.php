@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\admin;
 
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -32,7 +33,6 @@ class ProductController extends Controller
         return response($products);
     }
 
-
     // product by id
     public function show($id) {
         $productDetails = Product::with(['category' => fn($query) => $this->GetCategory($query),
@@ -43,7 +43,6 @@ class ProductController extends Controller
         return response($productDetails);
     }
 
-
     // product creating
     public function store(Request $request) {
         $validator = $this->MakeValidation($request);
@@ -53,6 +52,7 @@ class ProductController extends Controller
         }
 
         Product::create($this->QueryData($request, $imageUrl));
+        $this->IncreaseProductCount($request->category_id);
 
         return response()->json([
             'status' => 201,
@@ -60,19 +60,23 @@ class ProductController extends Controller
         ], 201);
     }
 
-
     // product updating
     public function update($id, Request $request) {
         $validator = $this->MakeValidation($request);
+        $product = Product::find($id);
 
-        if($request->hasFile('image')) {
-            // deleting old image file
-            $this->DeleteImage($id);
+        if($product) {
+            $oldCategoryId = $product->category_id;
+            if($request->hasFile('image')) {
+                $this->DeleteImage($product->image);
+                $imageUrl = $this->StoreImage($request);
+            }
+            Product::where('id', $id)
+                    ->update($this->QueryData($request, $imageUrl));
 
-            $imageUrl = $this->StoreImage($request);
+            $this->DecreaseProductCount($oldCategoryId);
+            $this->IncreaseProductCount($request->category_id);
         }
-
-        Product::where('id', $id)->update($this->QueryData($request, $imageUrl));
 
         return response()->json([
             'status' => 200,
@@ -80,12 +84,14 @@ class ProductController extends Controller
         ], 200);
     }
 
-
     public function destory($id) {
-        // deleting old image file
-        $this->DeleteImage($id);
-
-        Product::where('id', $id)->delete();
+        $product = Product::find($id);
+        if($product) {
+            $this->DeleteImage($product->image);
+            $categoryId = $product->category_id;
+            $product->delete();
+            $this->DecreaseProductCount($categoryId);
+        }
 
         return response()->json([
             'status' => 200,
@@ -93,27 +99,26 @@ class ProductController extends Controller
         ]);
     }
 
-
     // Product data
-    private function GetProduct() {
-        $products = Product::with(['category' => fn($query) => $this->GetCategory($query),
-                            'promotion' => fn($query) => $this->GetPromotion($query)])
-                            ->paginate(8);
+    // private function GetProduct() {
+    //     $products = Product::with(['category' => fn($query) => $this->GetCategory($query),
+    //                         'promotion' => fn($query) => $this->GetPromotion($query)])
+    //                         ->paginate(8);
 
-        return $products;
-    }
+    //     return $products;
+    // }
 
     // Related category
     private function GetCategory($query) {
         $data = $query->select('id', 'name', 'image');
-
         return $data;
     }
 
     // Related promotion
     private function GetPromotion($query) {
         $data = $query->where('active', 1)
-                ->select('id', 'promotion_type', 'cashback', 'giveaway_id', 'discount', 'start_date', 'end_date');
+                      ->select('id', 'promotion_type', 'cashback',
+                      'giveaway_id', 'discount', 'start_date', 'end_date');
 
         return $data;
     }
@@ -130,6 +135,22 @@ class ProductController extends Controller
         ])->validate();
 
         return $validator;
+    }
+
+    private function IncreaseProductCount($categoryId) {
+        $category = Category::find($categoryId);
+        if($category) {
+            $category->increment('product_count');
+            $category->save();
+        }
+    }
+
+    private function DecreaseProductCount($categoryId) {
+        $category = Category::find($categoryId);
+        if($category) {
+            $category->decrement('product_count');
+            $category->save();
+        }
     }
 
     // store image file
@@ -156,9 +177,8 @@ class ProductController extends Controller
     }
 
     // deleting image from storage
-    private function DeleteImage($id) {
-        $oldImgUrl = Product::where('id', $id)->get()->first()->image;
-        $segments = explode('/', $oldImgUrl);
+    private function DeleteImage($imageUrl) {
+        $segments = explode('/', $imageUrl);
         $oldImg = end($segments);
         Storage::delete('public/product_image/'.$oldImg);
     }
